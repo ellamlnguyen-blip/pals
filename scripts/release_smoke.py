@@ -47,4 +47,5 @@ event_id = f"release-smoke-{int(time.time())}"
 event = {"id": event_id, "title": "Release smoke event", "category": "test", "when": "Now", "where": "Test", "desc": "Temporary release check", "people": [], "lat": 0, "lng": 0}
 request("/events", "POST", event, token)
 request(f"/events/{event_id}/rsvps", "POST", token=token)
+request(f"/events/{event_id}", "DELETE", token=token)
 print(f"Release smoke test passed for {account['email']}")
