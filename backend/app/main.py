@@ -135,6 +135,7 @@ class Event(BaseModel):
     lng: float
     starts_at: Optional[str] = None
     ends_at: Optional[str] = None
+    chat_icon: Optional[str] = Field(default=None, max_length=8)
 
 
 class RegisterRequest(BaseModel):

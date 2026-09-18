@@ -68,7 +68,7 @@ def migrate(connection: object) -> None:
         connection.execute("INSERT INTO schema_migrations (version) VALUES (?)", (version,))
     # Preserve databases created before migrations were introduced.
     columns = ({row[1] for row in connection.execute("PRAGMA table_info(events)")} if not getattr(connection, "postgres", False) else {row["column_name"] for row in connection.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'events'")})
-    for name, definition in (("starts_at", "TEXT"), ("ends_at", "TEXT"), ("created_by", "TEXT")):
+    for name, definition in (("starts_at", "TEXT"), ("ends_at", "TEXT"), ("created_by", "TEXT"), ("chat_icon", "TEXT")):
         if name not in columns:
             connection.execute(f"ALTER TABLE events ADD COLUMN {name} {definition}")
     user_columns = ({row[1] for row in connection.execute("PRAGMA table_info(users)")} if not getattr(connection, "postgres", False) else {row["column_name"] for row in connection.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users'")})

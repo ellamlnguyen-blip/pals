@@ -58,11 +58,11 @@ class EventStore:
             if seed_events and event_count == 0:
                 connection.executemany(
                     """INSERT INTO events
-                    (id, title, category, event_when, location, description, people, lat, lng, starts_at, ends_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (id, title, category, event_when, location, description, people, lat, lng, starts_at, ends_at, chat_icon)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     [(e["id"], e["title"], e["category"], e["when"], e["where"],
                       e["desc"], json.dumps(e.get("people", [])), e["lat"], e["lng"],
-                      e.get("starts_at"), e.get("ends_at"))
+                    e.get("starts_at"), e.get("ends_at"), e.get("chat_icon"))
                      for e in seed_events],
                 )
             if connection.postgres:
@@ -207,11 +207,8 @@ class EventStore:
         with self._connect() as connection:
             return connection.execute(
                 """SELECT 1 FROM events e WHERE e.id = ?
-                AND (e.starts_at IS NULL OR e.starts_at >= ?)
-                AND (
-                    e.created_by = ? OR EXISTS (
-                        SELECT 1 FROM event_rsvps r WHERE r.event_id = e.id AND r.user_id = ?
-                    ))""", (event_id, (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat(), user_id, user_id)
+                AND (e.starts_at IS NULL OR e.starts_at >= ?)""",
+                (event_id, (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()),
             ).fetchone() is not None
 
     def list_messages(self, event_id: str, limit: int = 50, before: str | None = None) -> list[dict[str, Any]]:
@@ -266,10 +263,10 @@ class EventStore:
         with self._connect() as connection:
             connection.execute(
                 """INSERT INTO events
-                (id, title, category, event_when, location, description, people, lat, lng, starts_at, ends_at, created_by)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (id, title, category, event_when, location, description, people, lat, lng, starts_at, ends_at, created_by, chat_icon)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (event["id"], event["title"], event["category"], event["when"], event["where"],
-                 event["desc"], json.dumps(event.get("people", [])), event["lat"], event["lng"], starts_at, ends_at, created_by),
+                 event["desc"], json.dumps(event.get("people", [])), event["lat"], event["lng"], starts_at, ends_at, created_by, event.get("chat_icon")),
             )
             friends = connection.execute("""SELECT CASE WHEN requester_id = ? THEN addressee_id ELSE requester_id END AS user_id
                 FROM friendships WHERE status = 'accepted' AND (requester_id = ? OR addressee_id = ?)""", (created_by, created_by, created_by)).fetchall()
@@ -282,7 +279,7 @@ class EventStore:
         return {**event, "starts_at": starts_at, "ends_at": ends_at, "created_by": created_by}
 
     def update_event(self, event_id: str, updates: dict[str, Any], user_id: str) -> dict[str, Any] | None:
-        allowed = {key: updates[key] for key in ("title", "category", "when", "where", "desc", "lat", "lng", "starts_at", "ends_at") if key in updates}
+        allowed = {key: updates[key] for key in ("title", "category", "when", "where", "desc", "lat", "lng", "starts_at", "ends_at", "chat_icon") if key in updates}
         if not allowed:
             return None
         assignments = ", ".join(f"{key if key not in {'when','where','desc'} else {'when':'event_when','where':'location','desc':'description'}[key]} = ?" for key in allowed)
@@ -399,4 +396,4 @@ class EventStore:
                 "when": row["event_when"], "where": row["location"], "desc": row["description"],
                 "people": people, "lat": row["lat"], "lng": row["lng"],
                 "starts_at": row["starts_at"], "ends_at": row["ends_at"],
-                "created_by": row["created_by"]}
+                "created_by": row["created_by"], "chat_icon": row["chat_icon"]}
