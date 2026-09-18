@@ -207,8 +207,11 @@ class EventStore:
         with self._connect() as connection:
             return connection.execute(
                 """SELECT 1 FROM events e WHERE e.id = ?
-                AND (e.starts_at IS NULL OR e.starts_at >= ?)""",
-                (event_id, (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()),
+                AND (e.starts_at IS NULL OR e.starts_at >= ?)
+                AND (e.created_by = ? OR EXISTS (
+                    SELECT 1 FROM event_rsvps r WHERE r.event_id = e.id AND r.user_id = ?
+                ))""",
+                (event_id, (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat(), user_id, user_id),
             ).fetchone() is not None
 
     def list_messages(self, event_id: str, limit: int = 50, before: str | None = None) -> list[dict[str, Any]]:
