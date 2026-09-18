@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: pals-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r ../requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    disk:
+      name: pals-media
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PALS_DATABASE_PATH
+        value: /var/data/pals.db
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pals-postgres
+          property: connectionString
+      - key: PALS_ALLOWED_ORIGINS
+        sync: false
+      - key: PALS_SESSION_HOURS
+        value: "168"
+      - key: PALS_SEED_SAMPLE_EVENTS
+        value: "false"
+      - key: PALS_MEDIA_DIR
+        value: /var/data/media
+databases:
+  - name: pals-postgres
+    databaseName: pals
+    user: pals
