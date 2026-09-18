@@ -18,7 +18,7 @@ services:
           name: pals-postgres
           property: connectionString
       - key: PALS_ALLOWED_ORIGINS
-        sync: false
+        value: https://usepals.com,https://www.usepals.com,https://pals-ashen.vercel.app
       - key: PALS_SESSION_HOURS
         value: "168"
       - key: PALS_SEED_SAMPLE_EVENTS
