@@ -72,7 +72,7 @@ def migrate(connection: object) -> None:
         if name not in columns:
             connection.execute(f"ALTER TABLE events ADD COLUMN {name} {definition}")
     user_columns = ({row[1] for row in connection.execute("PRAGMA table_info(users)")} if not getattr(connection, "postgres", False) else {row["column_name"] for row in connection.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users'")})
-    for name, definition in (("photo", "TEXT"), ("school", "TEXT"), ("year", "TEXT"), ("major", "TEXT"), ("hometown", "TEXT"), ("bio", "TEXT"), ("hobbies", "TEXT")):
+    for name, definition in (("photo", "TEXT"), ("photo_gallery", "TEXT"), ("school", "TEXT"), ("year", "TEXT"), ("major", "TEXT"), ("hometown", "TEXT"), ("bio", "TEXT"), ("hobbies", "TEXT")):
         if name not in user_columns:
             connection.execute(f"ALTER TABLE users ADD COLUMN {name} {definition}")
     session_columns = ({row[1] for row in connection.execute("PRAGMA table_info(sessions)")} if not getattr(connection, "postgres", False) else {row["column_name"] for row in connection.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'sessions'")})

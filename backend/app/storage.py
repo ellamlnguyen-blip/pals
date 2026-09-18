@@ -131,7 +131,7 @@ class EventStore:
         with self._connect() as connection:
             expiration_clause = "(s.expires_at IS NULL OR s.expires_at::timestamptz > CURRENT_TIMESTAMP)" if connection.postgres else "(s.expires_at IS NULL OR s.expires_at > CURRENT_TIMESTAMP)"
             user = connection.execute(
-                f"SELECT u.id, u.email, u.name, u.photo, u.school, u.year, u.major, u.hometown, u.bio, u.hobbies FROM users u JOIN sessions s ON s.user_id = u.id WHERE s.token = ? AND {expiration_clause}",
+                f"SELECT u.id, u.email, u.name, u.photo, u.photo_gallery, u.school, u.year, u.major, u.hometown, u.bio, u.hobbies FROM users u JOIN sessions s ON s.user_id = u.id WHERE s.token = ? AND {expiration_clause}",
                 (token,),
             ).fetchone()
         return dict(user) if user else None
@@ -142,20 +142,21 @@ class EventStore:
 
     def list_profiles(self) -> list[dict[str, Any]]:
         with self._connect() as connection:
-            rows = connection.execute("SELECT id, name, photo, school, year, major, hometown, bio, hobbies FROM users ORDER BY name").fetchall()
+            rows = connection.execute("SELECT id, name, photo, photo_gallery, school, year, major, hometown, bio, hobbies FROM users ORDER BY name").fetchall()
         return [self._profile(row) for row in rows]
 
     def get_profile(self, user_id: str) -> dict[str, Any] | None:
         with self._connect() as connection:
-            row = connection.execute("SELECT id, name, photo, school, year, major, hometown, bio, hobbies FROM users WHERE id = ?", (user_id,)).fetchone()
+            row = connection.execute("SELECT id, name, photo, photo_gallery, school, year, major, hometown, bio, hobbies FROM users WHERE id = ?", (user_id,)).fetchone()
         return self._profile(row) if row else None
 
     def update_profile(self, user_id: str, profile: dict[str, Any]) -> dict[str, Any] | None:
-        fields = ("name", "photo", "school", "year", "major", "hometown", "bio", "hobbies")
+        fields = ("name", "photo", "photo_gallery", "school", "year", "major", "hometown", "bio", "hobbies")
         values = {field: profile.get(field) for field in fields}
+        values["photo_gallery"] = json.dumps((profile.get("photo_gallery") or [])[:4])
         values["hobbies"] = json.dumps(profile.get("hobbies", []))
         with self._connect() as connection:
-            cursor = connection.execute("UPDATE users SET name = ?, photo = ?, school = ?, year = ?, major = ?, hometown = ?, bio = ?, hobbies = ? WHERE id = ?", (*[values[field] for field in fields], user_id))
+            cursor = connection.execute("UPDATE users SET name = ?, photo = ?, photo_gallery = ?, school = ?, year = ?, major = ?, hometown = ?, bio = ?, hobbies = ? WHERE id = ?", (*[values[field] for field in fields], user_id))
             if cursor.rowcount == 0:
                 return None
         return self.get_profile(user_id)
@@ -164,6 +165,7 @@ class EventStore:
     def _profile(row: sqlite3.Row) -> dict[str, Any]:
         profile = dict(row)
         profile["hobbies"] = json.loads(profile.get("hobbies") or "[]")
+        profile["photo_gallery"] = json.loads(profile.get("photo_gallery") or "[]")
         return profile
 
     @staticmethod
@@ -204,10 +206,12 @@ class EventStore:
     def can_message_event(self, event_id: str, user_id: str) -> bool:
         with self._connect() as connection:
             return connection.execute(
-                """SELECT 1 FROM events e WHERE e.id = ? AND (
+                """SELECT 1 FROM events e WHERE e.id = ?
+                AND (e.starts_at IS NULL OR e.starts_at >= ?)
+                AND (
                     e.created_by = ? OR EXISTS (
                         SELECT 1 FROM event_rsvps r WHERE r.event_id = e.id AND r.user_id = ?
-                    ))""", (event_id, user_id, user_id)
+                    ))""", (event_id, (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat(), user_id, user_id)
             ).fetchone() is not None
 
     def list_messages(self, event_id: str, limit: int = 50, before: str | None = None) -> list[dict[str, Any]]:

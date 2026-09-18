@@ -157,6 +157,7 @@ class MessageRequest(BaseModel):
 class ProfileRequest(BaseModel):
     name: str = Field(min_length=1)
     photo: Optional[str] = None
+    photo_gallery: list[str] = Field(default_factory=list, max_length=4)
     school: Optional[str] = None
     year: Optional[str] = None
     major: Optional[str] = None
