@@ -66,8 +66,8 @@ class EventStore:
                      for e in seed_events],
                 )
             if connection.postgres:
-                connection.execute("""UPDATE events SET starts_at = COALESCE(starts_at, CURRENT_TIMESTAMP),
-                    ends_at = COALESCE(ends_at, CURRENT_TIMESTAMP + INTERVAL '2 hours') WHERE starts_at IS NULL""")
+                connection.execute("""UPDATE events SET starts_at = COALESCE(starts_at, CURRENT_TIMESTAMP::text),
+                    ends_at = COALESCE(ends_at, (CURRENT_TIMESTAMP + INTERVAL '2 hours')::text) WHERE starts_at IS NULL""")
             else:
                 connection.execute("""UPDATE events SET starts_at = COALESCE(starts_at, datetime('now')),
                     ends_at = COALESCE(ends_at, datetime('now', '+2 hours')) WHERE starts_at IS NULL""")
@@ -129,8 +129,9 @@ class EventStore:
 
     def get_user_by_token(self, token: str) -> dict[str, str] | None:
         with self._connect() as connection:
+            expiration_clause = "(s.expires_at IS NULL OR s.expires_at::timestamptz > CURRENT_TIMESTAMP)" if connection.postgres else "(s.expires_at IS NULL OR s.expires_at > CURRENT_TIMESTAMP)"
             user = connection.execute(
-                "SELECT u.id, u.email, u.name, u.photo, u.school, u.year, u.major, u.hometown, u.bio, u.hobbies FROM users u JOIN sessions s ON s.user_id = u.id WHERE s.token = ? AND (s.expires_at IS NULL OR s.expires_at > CURRENT_TIMESTAMP)",
+                f"SELECT u.id, u.email, u.name, u.photo, u.school, u.year, u.major, u.hometown, u.bio, u.hobbies FROM users u JOIN sessions s ON s.user_id = u.id WHERE s.token = ? AND {expiration_clause}",
                 (token,),
             ).fetchone()
         return dict(user) if user else None
