@@ -113,6 +113,12 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(refreshed.json()["favorite_foods"], "Dumplings")
         self.assertEqual(refreshed.json()["favorite_music"], "Jazz")
         self.assertEqual(refreshed.json()["photo_zoom"], 1.75)
+        removed = self.client.patch("/api/v1/auth/me/profile", json={"name": "Test User", "photo": None, "photo_gallery": [], "photo_position_x": 50, "photo_position_y": 50, "photo_zoom": 1}, headers=headers)
+        self.assertEqual(removed.status_code, 200, removed.text)
+        self.assertIsNone(removed.json()["photo"])
+        self.assertEqual(removed.json()["photo_zoom"], 1)
+        invalid_crop = self.client.patch("/api/v1/auth/me/profile", json={"name": "Test User", "photo_position_x": 120}, headers=headers)
+        self.assertEqual(invalid_crop.status_code, 422)
         too_many = self.client.patch("/api/v1/auth/me/profile", json={"name": "Test User", "photo_gallery": gallery + ["/media/five.jpg"]}, headers=headers)
         self.assertEqual(too_many.status_code, 422)
 if __name__ == "__main__":
