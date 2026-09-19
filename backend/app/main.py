@@ -166,6 +166,9 @@ class ProfileRequest(BaseModel):
     hometown: Optional[str] = None
     bio: Optional[str] = None
     hobbies: list[str] = Field(default_factory=list)
+    goals: Optional[str] = None
+    friend_activities: Optional[str] = None
+    fun_facts: Optional[str] = None
 
 
 class AdminRequest(BaseModel):
