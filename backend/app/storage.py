@@ -271,6 +271,10 @@ class EventStore:
                 (event["id"], event["title"], event["category"], event["when"], event["where"],
                  event["desc"], json.dumps(event.get("people", [])), event["lat"], event["lng"], starts_at, ends_at, created_by, event.get("chat_icon")),
             )
+            connection.execute(
+                "INSERT INTO conversations (id, event_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+                (event["id"], event["id"]),
+            )
             friends = connection.execute("""SELECT CASE WHEN requester_id = ? THEN addressee_id ELSE requester_id END AS user_id
                 FROM friendships WHERE status = 'accepted' AND (requester_id = ? OR addressee_id = ?)""", (created_by, created_by, created_by)).fetchall()
             for friend in friends:

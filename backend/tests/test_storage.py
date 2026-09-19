@@ -63,6 +63,14 @@ class EventStoreTests(unittest.TestCase):
         self.assertTrue(self.store.delete_message(message["id"], guest["id"]))
         self.assertEqual(self.store.list_messages(created["id"]), [])
 
+    def test_event_creation_creates_its_own_conversation(self):
+        owner = self.store.create_user("conversation-owner@example.com", "Owner", "password123")
+        created = self.store.create_event(event("conversation-event"), owner["id"])
+        with self.store._connect() as connection:
+            conversation = connection.execute("SELECT event_id FROM conversations WHERE id = ?", (created["id"],)).fetchone()
+        self.assertIsNotNone(conversation)
+        self.assertEqual(conversation["event_id"], created["id"])
+
     def test_event_notifications_cover_posting_and_attendance(self):
         owner = self.store.create_user("notify-owner@example.com", "Owner", "password123")
         friend = self.store.create_user("notify-friend@example.com", "Friend", "password123")
