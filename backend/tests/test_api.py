@@ -91,6 +91,13 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(history.status_code, 200, history.text)
         self.assertEqual(history.json()[0]["attachment_url"], "/media/example.jpg")
 
-
+    def test_profile_gallery_round_trip_is_limited_to_four(self):
+        headers = self.register()
+        gallery = ["/media/one.jpg", "/media/two.jpg", "/media/three.jpg", "/media/four.jpg"]
+        response = self.client.patch("/api/v1/auth/me/profile", json={"name": "Test User", "photo_gallery": gallery}, headers=headers)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["photo_gallery"], gallery)
+        too_many = self.client.patch("/api/v1/auth/me/profile", json={"name": "Test User", "photo_gallery": gallery + ["/media/five.jpg"]}, headers=headers)
+        self.assertEqual(too_many.status_code, 422)
 if __name__ == "__main__":
     unittest.main()
