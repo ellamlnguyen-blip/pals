@@ -76,7 +76,10 @@ class EventStore:
     @staticmethod
     def _remove_synthetic_smoke_accounts(connection: DatabaseConnection) -> None:
         """Keep deployment smoke-test accounts out of the real People directory."""
-        rows = connection.execute("SELECT id FROM users WHERE email LIKE 'release-smoke-%@example.com'").fetchall()
+        rows = connection.execute(
+            "SELECT id FROM users WHERE email LIKE ?",
+            ("release-smoke-%@example.com",),
+        ).fetchall()
         ids = [row["id"] for row in rows]
         if not ids:
             return
