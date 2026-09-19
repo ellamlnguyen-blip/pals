@@ -94,13 +94,16 @@ class ApiTests(unittest.TestCase):
     def test_profile_gallery_round_trip_is_limited_to_four(self):
         headers = self.register()
         gallery = ["/media/one.jpg", "/media/two.jpg", "/media/three.jpg", "/media/four.jpg"]
-        response = self.client.patch("/api/v1/auth/me/profile", json={"name": "Test User", "photo_gallery": gallery, "instagram": "@testuser", "goals": "Start a campus club", "friend_activities": "Picnics and live music", "fun_facts": "I make great dumplings"}, headers=headers)
+        response = self.client.patch("/api/v1/auth/me/profile", json={"name": "Test User", "photo_gallery": gallery, "instagram": "@testuser", "goals": "Start a campus club", "friend_activities": "Picnics and live music", "fun_facts": "I make great dumplings", "things_to_do": "Visit every museum", "favorite_foods": "Dumplings", "favorite_music": "Jazz"}, headers=headers)
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(response.json()["photo_gallery"], gallery)
         self.assertEqual(response.json()["instagram"], "@testuser")
         self.assertEqual(response.json()["goals"], "Start a campus club")
         self.assertEqual(response.json()["friend_activities"], "Picnics and live music")
         self.assertEqual(response.json()["fun_facts"], "I make great dumplings")
+        self.assertEqual(response.json()["things_to_do"], "Visit every museum")
+        self.assertEqual(response.json()["favorite_foods"], "Dumplings")
+        self.assertEqual(response.json()["favorite_music"], "Jazz")
         too_many = self.client.patch("/api/v1/auth/me/profile", json={"name": "Test User", "photo_gallery": gallery + ["/media/five.jpg"]}, headers=headers)
         self.assertEqual(too_many.status_code, 422)
 if __name__ == "__main__":
