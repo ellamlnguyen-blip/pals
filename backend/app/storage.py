@@ -148,7 +148,7 @@ class EventStore:
         with self._connect() as connection:
             expiration_clause = "(s.expires_at IS NULL OR s.expires_at::timestamptz > CURRENT_TIMESTAMP)" if connection.postgres else "(s.expires_at IS NULL OR s.expires_at > CURRENT_TIMESTAMP)"
             user = connection.execute(
-                f"SELECT u.id, u.email, u.name, u.photo, u.photo_gallery, u.instagram, u.school, u.year, u.major, u.hometown, u.bio, u.hobbies, u.goals, u.friend_activities, u.fun_facts FROM users u JOIN sessions s ON s.user_id = u.id WHERE s.token = ? AND {expiration_clause}",
+                f"SELECT u.id, u.email, u.name, u.photo, u.photo_gallery, u.instagram, u.school, u.year, u.major, u.hometown, u.bio, u.hobbies, u.goals, u.friend_activities, u.fun_facts, u.things_to_do, u.favorite_foods, u.favorite_music FROM users u JOIN sessions s ON s.user_id = u.id WHERE s.token = ? AND {expiration_clause}",
                 (token,),
             ).fetchone()
         return dict(user) if user else None
@@ -159,21 +159,21 @@ class EventStore:
 
     def list_profiles(self) -> list[dict[str, Any]]:
         with self._connect() as connection:
-            rows = connection.execute("SELECT id, name, photo, photo_gallery, instagram, school, year, major, hometown, bio, hobbies, goals, friend_activities, fun_facts FROM users ORDER BY name").fetchall()
+            rows = connection.execute("SELECT id, name, photo, photo_gallery, instagram, school, year, major, hometown, bio, hobbies, goals, friend_activities, fun_facts, things_to_do, favorite_foods, favorite_music FROM users ORDER BY name").fetchall()
         return [self._profile(row) for row in rows]
 
     def get_profile(self, user_id: str) -> dict[str, Any] | None:
         with self._connect() as connection:
-            row = connection.execute("SELECT id, name, photo, photo_gallery, instagram, school, year, major, hometown, bio, hobbies, goals, friend_activities, fun_facts FROM users WHERE id = ?", (user_id,)).fetchone()
+            row = connection.execute("SELECT id, name, photo, photo_gallery, instagram, school, year, major, hometown, bio, hobbies, goals, friend_activities, fun_facts, things_to_do, favorite_foods, favorite_music FROM users WHERE id = ?", (user_id,)).fetchone()
         return self._profile(row) if row else None
 
     def update_profile(self, user_id: str, profile: dict[str, Any]) -> dict[str, Any] | None:
-        fields = ("name", "photo", "photo_gallery", "instagram", "school", "year", "major", "hometown", "bio", "hobbies", "goals", "friend_activities", "fun_facts")
+        fields = ("name", "photo", "photo_gallery", "instagram", "school", "year", "major", "hometown", "bio", "hobbies", "goals", "friend_activities", "fun_facts", "things_to_do", "favorite_foods", "favorite_music")
         values = {field: profile.get(field) for field in fields}
         values["photo_gallery"] = json.dumps((profile.get("photo_gallery") or [])[:4])
         values["hobbies"] = json.dumps(profile.get("hobbies", []))
         with self._connect() as connection:
-            cursor = connection.execute("UPDATE users SET name = ?, photo = ?, photo_gallery = ?, instagram = ?, school = ?, year = ?, major = ?, hometown = ?, bio = ?, hobbies = ?, goals = ?, friend_activities = ?, fun_facts = ? WHERE id = ?", (*[values[field] for field in fields], user_id))
+            cursor = connection.execute("UPDATE users SET name = ?, photo = ?, photo_gallery = ?, instagram = ?, school = ?, year = ?, major = ?, hometown = ?, bio = ?, hobbies = ?, goals = ?, friend_activities = ?, fun_facts = ?, things_to_do = ?, favorite_foods = ?, favorite_music = ? WHERE id = ?", (*[values[field] for field in fields], user_id))
             if cursor.rowcount == 0:
                 return None
         return self.get_profile(user_id)

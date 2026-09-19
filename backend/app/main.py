@@ -169,6 +169,9 @@ class ProfileRequest(BaseModel):
     goals: Optional[str] = None
     friend_activities: Optional[str] = None
     fun_facts: Optional[str] = None
+    things_to_do: Optional[str] = None
+    favorite_foods: Optional[str] = None
+    favorite_music: Optional[str] = None
 
 
 class AdminRequest(BaseModel):
