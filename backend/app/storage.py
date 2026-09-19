@@ -54,6 +54,7 @@ class EventStore:
     def initialize(self, seed_events: list[dict[str, Any]] | None = None) -> None:
         with self._connect() as connection:
             migrate(connection)
+            self._remove_synthetic_smoke_accounts(connection)
             event_count = connection.execute("SELECT COUNT(*) AS count FROM events").fetchone()["count"]
             if seed_events and event_count == 0:
                 connection.executemany(
@@ -71,6 +72,19 @@ class EventStore:
             else:
                 connection.execute("""UPDATE events SET starts_at = COALESCE(starts_at, datetime('now')),
                     ends_at = COALESCE(ends_at, datetime('now', '+2 hours')) WHERE starts_at IS NULL""")
+
+    @staticmethod
+    def _remove_synthetic_smoke_accounts(connection: DatabaseConnection) -> None:
+        """Keep deployment smoke-test accounts out of the real People directory."""
+        rows = connection.execute("SELECT id FROM users WHERE email LIKE 'release-smoke-%@example.com'").fetchall()
+        ids = [row["id"] for row in rows]
+        if not ids:
+            return
+        for user_id in ids:
+            for table, column in (("sessions", "user_id"), ("event_rsvps", "user_id"), ("event_admins", "user_id"), ("friendships", "requester_id"), ("friendships", "addressee_id"), ("notifications", "user_id"), ("direct_messages", "sender_id"), ("direct_messages", "recipient_id")):
+                connection.execute(f"DELETE FROM {table} WHERE {column} = ?", (user_id,))
+            connection.execute("DELETE FROM messages WHERE sender_id = ?", (user_id,))
+            connection.execute("DELETE FROM users WHERE id = ?", (user_id,))
 
     def list_events(self) -> list[dict[str, Any]]:
         with self._connect() as connection:

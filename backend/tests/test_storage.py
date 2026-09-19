@@ -71,6 +71,11 @@ class EventStoreTests(unittest.TestCase):
         self.assertIsNotNone(conversation)
         self.assertEqual(conversation["event_id"], created["id"])
 
+    def test_synthetic_release_smoke_accounts_are_removed_on_initialize(self):
+        self.store.create_user("release-smoke-cleanup@example.com", "Release Smoke", "password123")
+        self.store.initialize([])
+        self.assertEqual(self.store.list_profiles(), [])
+
     def test_event_notifications_cover_posting_and_attendance(self):
         owner = self.store.create_user("notify-owner@example.com", "Owner", "password123")
         friend = self.store.create_user("notify-friend@example.com", "Friend", "password123")
