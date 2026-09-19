@@ -159,6 +159,9 @@ class ProfileRequest(BaseModel):
     name: str = Field(min_length=1)
     photo: Optional[str] = None
     photo_gallery: list[str] = Field(default_factory=list, max_length=4)
+    photo_position_x: float = Field(default=50, ge=0, le=100)
+    photo_position_y: float = Field(default=50, ge=0, le=100)
+    photo_zoom: float = Field(default=1, ge=1, le=3)
     instagram: Optional[str] = Field(default=None, max_length=80)
     school: Optional[str] = None
     year: Optional[str] = None
