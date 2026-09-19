@@ -269,6 +269,12 @@ def update_my_profile(profile: ProfileRequest, authorization: Optional[str] = He
     return event_store.update_profile(user["id"], payload) or {}
 
 
+@app.get("/api/v1/auth/me/profile")
+def get_my_profile(authorization: Optional[str] = Header(default=None)) -> dict:
+    user = current_user(authorization)
+    return event_store.get_profile(user["id"]) or {}
+
+
 @app.get("/api/v1/people")
 def list_people() -> list[dict]:
     return event_store.list_profiles()

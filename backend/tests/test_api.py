@@ -104,6 +104,10 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.json()["things_to_do"], "Visit every museum")
         self.assertEqual(response.json()["favorite_foods"], "Dumplings")
         self.assertEqual(response.json()["favorite_music"], "Jazz")
+        refreshed = self.client.get("/api/v1/auth/me/profile", headers=headers)
+        self.assertEqual(refreshed.status_code, 200)
+        self.assertEqual(refreshed.json()["favorite_foods"], "Dumplings")
+        self.assertEqual(refreshed.json()["favorite_music"], "Jazz")
         too_many = self.client.patch("/api/v1/auth/me/profile", json={"name": "Test User", "photo_gallery": gallery + ["/media/five.jpg"]}, headers=headers)
         self.assertEqual(too_many.status_code, 422)
 if __name__ == "__main__":
