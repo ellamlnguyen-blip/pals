@@ -196,7 +196,14 @@ class EventStore:
 
     def list_profiles(self) -> list[dict[str, Any]]:
         with self._connect() as connection:
-            rows = connection.execute("SELECT id, name, photo, photo_gallery, photo_position_x, photo_position_y, photo_zoom, instagram, school, year, major, hometown, bio, hobbies, goals, friend_activities, fun_facts, things_to_do, favorite_foods, favorite_music FROM users ORDER BY name").fetchall()
+            rows = connection.execute(
+                """SELECT id, name, photo, photo_gallery, photo_position_x, photo_position_y, photo_zoom, instagram, school, year, major, hometown, bio, hobbies, goals, friend_activities, fun_facts, things_to_do, favorite_foods, favorite_music
+                FROM users
+                WHERE email NOT LIKE 'release-smoke-%@example.com'
+                AND email NOT LIKE 'release-debug-%@example.com'
+                AND email NOT LIKE 'release-routing-%@example.com'
+                ORDER BY name"""
+            ).fetchall()
         return [self._profile(row) for row in rows]
 
     def get_profile(self, user_id: str) -> dict[str, Any] | None:

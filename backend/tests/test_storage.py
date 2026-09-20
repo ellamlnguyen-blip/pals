@@ -88,6 +88,7 @@ class EventStoreTests(unittest.TestCase):
     def test_synthetic_release_smoke_accounts_are_removed_on_initialize(self):
         account = self.store.create_user("release-smoke-cleanup@example.com", "Release Smoke", "password123")
         self.store.create_event(event("release-smoke-cleanup-event"), account["id"])
+        self.assertEqual(self.store.list_profiles(), [])
         self.store.initialize([])
         self.assertEqual(self.store.list_profiles(), [])
         self.assertFalse(any(item["id"] == "release-smoke-cleanup-event" for item in self.store.list_events()))
