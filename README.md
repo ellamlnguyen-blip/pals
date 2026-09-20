@@ -29,12 +29,13 @@ DATABASE_URL=postgresql://... PYTHONPATH=backend python3 -m unittest discover -s
 The backend reads configuration from environment variables. Copy `.env.example` into your deployment configuration and set real values; never commit credentials.
 
 - `DATABASE_URL`: PostgreSQL connection string
+- `PALS_REQUIRE_DATABASE_URL`: set to `true` in production so the API never falls back to per-instance SQLite
 - `PALS_ALLOWED_ORIGINS`: comma-separated HTTPS frontend origins
 - `PALS_SESSION_HOURS`: session lifetime
 - `PALS_S3_*`: S3-compatible media storage credentials
 - `PALS_MEDIA_PUBLIC_URL`: public media base URL
 
-`render.yaml` defines a Render FastAPI service, managed PostgreSQL database, and a persistent disk for uploaded media. Deploy the static frontend separately through Vercel; set `window.PALS_API_URL` in the deployed `config.js` to the public API URL. For multi-instance or CDN scale, replace the disk with the S3-compatible settings above.
+`render.yaml` defines a Render FastAPI service, managed PostgreSQL database, and a persistent disk for uploaded media. After creating or connecting the existing Render service to this Blueprint, sync it and confirm that the service environment contains the generated `DATABASE_URL`; the value must not be committed to Git. `PALS_REQUIRE_DATABASE_URL=true` intentionally makes readiness fail if that shared database is missing. Deploy the static frontend separately through Vercel; set `window.PALS_API_URL` in the deployed `config.js` to the public API URL. For multi-instance or CDN scale, replace the disk with the S3-compatible settings above.
 
 Before launch, verify `/healthz`, registration/login, event creation, RSVP, messaging, media upload, WebSockets, and PostgreSQL migrations against the deployed services.
 
