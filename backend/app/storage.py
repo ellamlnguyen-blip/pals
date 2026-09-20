@@ -101,10 +101,10 @@ class EventStore:
     @staticmethod
     def _remove_synthetic_smoke_accounts(connection: DatabaseConnection) -> None:
         """Keep deployment smoke-test accounts out of the real People directory."""
-        connection.execute("DELETE FROM events WHERE id LIKE 'release-smoke-%' OR id LIKE 'release-debug-%'")
+        connection.execute("DELETE FROM events WHERE id LIKE 'release-smoke-%' OR id LIKE 'release-debug-%' OR id LIKE 'release-routing-%'")
         rows = connection.execute(
-            "SELECT id FROM users WHERE email LIKE ?",
-            ("release-smoke-%@example.com",),
+            "SELECT id FROM users WHERE email LIKE ? OR email LIKE ? OR email LIKE ?",
+            ("release-smoke-%@example.com", "release-debug-%@example.com", "release-routing-%@example.com"),
         ).fetchall()
         ids = [row["id"] for row in rows]
         if not ids:
@@ -122,6 +122,7 @@ class EventStore:
                 WHERE (starts_at IS NULL OR starts_at >= ?)
                 AND id NOT LIKE 'release-smoke-%'
                 AND id NOT LIKE 'release-debug-%'
+                AND id NOT LIKE 'release-routing-%'
                 ORDER BY COALESCE(starts_at, event_when), id""", ((datetime.now(timezone.utc) - timedelta(hours=24)).isoformat(),)
             ).fetchall()
             attendees = connection.execute(

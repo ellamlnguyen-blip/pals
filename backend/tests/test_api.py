@@ -75,6 +75,7 @@ class ApiTests(unittest.TestCase):
 
     def test_event_listing_hides_reserved_release_artifacts(self):
         main.event_store.create_event({"id": "release-smoke-api-list", "title": "Smoke", "category": "test", "when": "Now", "where": "Test", "desc": "Temporary", "people": [], "lat": 0, "lng": 0}, "owner")
+        main.event_store.create_event({"id": "release-routing-api-list", "title": "Routing", "category": "test", "when": "Now", "where": "Test", "desc": "Temporary", "people": [], "lat": 0, "lng": 0}, "owner")
         main.event_store.create_event({"id": "real-api-list", "title": "Real", "category": "test", "when": "Now", "where": "Test", "desc": "Real", "people": [], "lat": 0, "lng": 0}, "owner")
         response = self.client.get("/api/v1/events")
         self.assertEqual({item["id"] for item in response.json()}, {"real-api-list"})

@@ -394,7 +394,7 @@ def direct_messages(user_id: str, authorization: Optional[str] = Header(default=
 def list_events() -> list[dict]:
     return [
         event for event in event_store.list_events()
-        if not str(event.get("id", "")).startswith(("release-smoke-", "release-debug-"))
+        if not str(event.get("id", "")).startswith(("release-smoke-", "release-debug-", "release-routing-"))
     ]
 
 

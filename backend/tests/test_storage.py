@@ -95,6 +95,7 @@ class EventStoreTests(unittest.TestCase):
     def test_reserved_release_artifacts_are_never_listed(self):
         self.store.create_event(event("release-smoke-visible-check"), "owner")
         self.store.create_event(event("release-debug-visible-check"), "owner")
+        self.store.create_event(event("release-routing-visible-check"), "owner")
         self.store.create_event(event("real-visible-check"), "owner")
         listed_ids = {item["id"] for item in self.store.list_events()}
         self.assertEqual(listed_ids, {"real-visible-check"})
