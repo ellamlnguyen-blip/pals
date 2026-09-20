@@ -71,6 +71,12 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.client.get("/healthz").json(), {"status": "ready"})
         self.assertEqual(self.client.get("/api/v1/auth/me", headers=headers).status_code, 200)
 
+    def test_event_listing_hides_reserved_release_artifacts(self):
+        main.event_store.create_event({"id": "release-smoke-api-list", "title": "Smoke", "category": "test", "when": "Now", "where": "Test", "desc": "Temporary", "people": [], "lat": 0, "lng": 0}, "owner")
+        main.event_store.create_event({"id": "real-api-list", "title": "Real", "category": "test", "when": "Now", "where": "Test", "desc": "Real", "people": [], "lat": 0, "lng": 0}, "owner")
+        response = self.client.get("/api/v1/events")
+        self.assertEqual({item["id"] for item in response.json()}, {"real-api-list"})
+
     def test_change_password_requires_current_password_and_updates_login(self):
         headers = self.register("password@example.com")
         wrong = self.client.post("/api/v1/auth/change-password", json={"current_password": "wrongpass", "new_password": "newpassword123"}, headers=headers)

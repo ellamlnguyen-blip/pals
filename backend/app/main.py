@@ -389,7 +389,10 @@ def direct_messages(user_id: str, authorization: Optional[str] = Header(default=
 
 @app.get("/api/v1/events")
 def list_events() -> list[dict]:
-    return event_store.list_events()
+    return [
+        event for event in event_store.list_events()
+        if not str(event.get("id", "")).startswith(("release-smoke-", "release-debug-"))
+    ]
 
 
 @app.get("/api/v1/calendar")
