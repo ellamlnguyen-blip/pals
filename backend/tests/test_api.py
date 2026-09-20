@@ -66,6 +66,17 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(readiness.headers["x-content-type-options"], "nosniff")
         self.assertEqual(readiness.headers["x-frame-options"], "DENY")
 
+    def test_change_password_requires_current_password_and_updates_login(self):
+        headers = self.register("password@example.com")
+        wrong = self.client.post("/api/v1/auth/change-password", json={"current_password": "wrongpass", "new_password": "newpassword123"}, headers=headers)
+        self.assertEqual(wrong.status_code, 400)
+        changed = self.client.post("/api/v1/auth/change-password", json={"current_password": "password123", "new_password": "newpassword123"}, headers=headers)
+        self.assertEqual(changed.status_code, 200, changed.text)
+        old_login = self.client.post("/api/v1/auth/login", json={"email": "password@example.com", "password": "password123"})
+        self.assertEqual(old_login.status_code, 401)
+        new_login = self.client.post("/api/v1/auth/login", json={"email": "password@example.com", "password": "newpassword123"})
+        self.assertEqual(new_login.status_code, 200, new_login.text)
+
     def test_media_validation_requires_auth_and_rejects_unsupported_types(self):
         response = self.client.post("/api/v1/media", files={"file": ("note.txt", b"hello", "text/plain")})
         self.assertEqual(response.status_code, 401)

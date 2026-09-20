@@ -157,6 +157,14 @@ class EventStore:
         with self._connect() as connection:
             connection.execute("DELETE FROM sessions WHERE token = ?", (token,))
 
+    def change_password(self, user_id: str, current_password: str, new_password: str) -> bool:
+        with self._connect() as connection:
+            user = connection.execute("SELECT password_hash FROM users WHERE id = ?", (user_id,)).fetchone()
+            if user is None or not self._verify_password(current_password, user["password_hash"]):
+                return False
+            connection.execute("UPDATE users SET password_hash = ? WHERE id = ?", (self._hash_password(new_password), user_id))
+        return True
+
     def list_profiles(self) -> list[dict[str, Any]]:
         with self._connect() as connection:
             rows = connection.execute("SELECT id, name, photo, photo_gallery, photo_position_x, photo_position_y, photo_zoom, instagram, school, year, major, hometown, bio, hobbies, goals, friend_activities, fun_facts, things_to_do, favorite_foods, favorite_music FROM users ORDER BY name").fetchall()

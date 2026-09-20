@@ -149,6 +149,11 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=8)
+
+
 class MessageRequest(BaseModel):
     body: str = Field(min_length=1, max_length=2000)
     kind: str = Field(default="text", pattern="^(text|photo|emoji|sticker|gif)$")
@@ -231,6 +236,14 @@ def logout(authorization: Optional[str] = Header(default=None)) -> None:
     if not authorization or not authorization.lower().startswith("bearer "):
         return
     event_store.delete_session(authorization[7:].strip())
+
+
+@app.post("/api/v1/auth/change-password")
+def change_password(request: ChangePasswordRequest, authorization: Optional[str] = Header(default=None)) -> dict[str, str]:
+    user = current_user(authorization)
+    if not event_store.change_password(user["id"], request.current_password, request.new_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    return {"status": "updated"}
 
 
 def current_user(authorization: Optional[str]) -> dict[str, Any]:
