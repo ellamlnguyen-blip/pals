@@ -94,7 +94,9 @@ class EventStore:
         with self._connect() as connection:
             rows = connection.execute(
                 """SELECT * FROM events
-                WHERE starts_at IS NULL OR starts_at >= ?
+                WHERE (starts_at IS NULL OR starts_at >= ?)
+                AND id NOT LIKE 'release-smoke-%'
+                AND id NOT LIKE 'release-debug-%'
                 ORDER BY COALESCE(starts_at, event_when), id""", ((datetime.now(timezone.utc) - timedelta(hours=24)).isoformat(),)
             ).fetchall()
             attendees = connection.execute(
