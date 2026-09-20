@@ -4,7 +4,7 @@ from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from app.storage import EventStore
+from app.storage import DatabaseConnection, EventStore
 
 
 def event(event_id="event-1", starts_at=None):
@@ -25,6 +25,13 @@ class EventStoreTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp_dir.cleanup()
+
+    def test_postgres_query_adapter_escapes_literal_percent_signs(self):
+        connection = DatabaseConnection(None, postgres=True)
+        self.assertEqual(
+            connection._query("id LIKE 'release-smoke-%' AND id = ? AND note = %s"),
+            "id LIKE 'release-smoke-%%' AND id = %s AND note = %s",
+        )
 
     def test_production_mode_rejects_sqlite_fallback(self):
         with patch.dict("os.environ", {"PALS_REQUIRE_DATABASE_URL": "true"}, clear=False):

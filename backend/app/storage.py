@@ -19,7 +19,25 @@ class DatabaseConnection:
         self.postgres = postgres
 
     def _query(self, query: str) -> str:
-        return query.replace("?", "%s") if self.postgres else query
+        if not self.postgres:
+            return query
+        converted: list[str] = []
+        index = 0
+        while index < len(query):
+            character = query[index]
+            if character == "?":
+                converted.append("%s")
+            elif character == "%":
+                next_character = query[index + 1] if index + 1 < len(query) else ""
+                if next_character in {"s", "b", "t", "%"}:
+                    converted.append(f"%{next_character}")
+                    index += 1
+                else:
+                    converted.append("%%")
+            else:
+                converted.append(character)
+            index += 1
+        return "".join(converted)
 
     def execute(self, query: str, params: Any = ()) -> Any:
         return self.connection.execute(self._query(query), params)
