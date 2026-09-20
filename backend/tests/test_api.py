@@ -66,6 +66,11 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(readiness.headers["x-content-type-options"], "nosniff")
         self.assertEqual(readiness.headers["x-frame-options"], "DENY")
 
+    def test_readiness_does_not_delete_a_live_smoke_style_session(self):
+        headers = self.register("release-smoke-health-check@example.com")
+        self.assertEqual(self.client.get("/healthz").json(), {"status": "ready"})
+        self.assertEqual(self.client.get("/api/v1/auth/me", headers=headers).status_code, 200)
+
     def test_change_password_requires_current_password_and_updates_login(self):
         headers = self.register("password@example.com")
         wrong = self.client.post("/api/v1/auth/change-password", json={"current_password": "wrongpass", "new_password": "newpassword123"}, headers=headers)

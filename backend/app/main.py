@@ -209,7 +209,6 @@ def health_check() -> dict[str, str]:
 
 @app.get("/healthz")
 def readiness_check() -> dict[str, str]:
-    event_store.initialize([])
     return {"status": "ready"}
 
 
