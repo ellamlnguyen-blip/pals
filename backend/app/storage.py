@@ -172,6 +172,10 @@ class EventStore:
         values = {field: profile.get(field) for field in fields}
         values["photo_gallery"] = json.dumps((profile.get("photo_gallery") or [])[:4])
         values["hobbies"] = json.dumps(profile.get("hobbies", []))
+        if not values["photo"]:
+            values["photo_position_x"] = 50
+            values["photo_position_y"] = 50
+            values["photo_zoom"] = 1
         with self._connect() as connection:
             cursor = connection.execute("UPDATE users SET name = ?, photo = ?, photo_gallery = ?, photo_position_x = ?, photo_position_y = ?, photo_zoom = ?, instagram = ?, school = ?, year = ?, major = ?, hometown = ?, bio = ?, hobbies = ?, goals = ?, friend_activities = ?, fun_facts = ?, things_to_do = ?, favorite_foods = ?, favorite_music = ? WHERE id = ?", (*[values[field] for field in fields], user_id))
             if cursor.rowcount == 0:
