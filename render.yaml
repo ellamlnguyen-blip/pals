@@ -22,6 +22,8 @@ services:
         value: https://usepals.com,https://www.usepals.com,https://pals-ashen.vercel.app
       - key: PALS_SESSION_HOURS
         value: "168"
+      - key: PALS_REQUIRE_DATABASE_URL
+        value: "true"
       - key: PALS_SEED_SAMPLE_EVENTS
         value: "false"
       - key: PALS_MEDIA_DIR

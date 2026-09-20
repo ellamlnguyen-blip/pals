@@ -65,6 +65,8 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(readiness.json(), {"status": "ready"})
         self.assertEqual(readiness.headers["x-content-type-options"], "nosniff")
         self.assertEqual(readiness.headers["x-frame-options"], "DENY")
+        self.assertEqual(readiness.headers["x-pals-release"], "account-rollout-v1")
+        self.assertEqual(readiness.headers["x-pals-storage"], "sqlite")
 
     def test_readiness_does_not_delete_a_live_smoke_style_session(self):
         headers = self.register("release-smoke-health-check@example.com")

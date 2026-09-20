@@ -40,9 +40,16 @@ class EventStore:
         configured_path = database_path or os.getenv("PALS_DATABASE_PATH")
         self.database_path = Path(configured_path) if configured_path else DEFAULT_DATABASE_PATH
         self.database_url = os.getenv("DATABASE_URL")
+        self.require_database_url = os.getenv("PALS_REQUIRE_DATABASE_URL", "false").lower() == "true"
+
+    @property
+    def uses_postgres(self) -> bool:
+        return bool(self.database_url and self.database_url.startswith(("postgres://", "postgresql://")))
 
     def _connect(self) -> DatabaseConnection:
-        if self.database_url and self.database_url.startswith(("postgres://", "postgresql://")):
+        if self.require_database_url and not self.uses_postgres:
+            raise RuntimeError("DATABASE_URL must point to PostgreSQL when PALS_REQUIRE_DATABASE_URL is enabled")
+        if self.uses_postgres:
             import psycopg
             from psycopg.rows import dict_row
             return DatabaseConnection(psycopg.connect(self.database_url, row_factory=dict_row), postgres=True)

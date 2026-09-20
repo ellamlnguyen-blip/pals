@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -24,6 +25,12 @@ class EventStoreTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp_dir.cleanup()
+
+    def test_production_mode_rejects_sqlite_fallback(self):
+        with patch.dict("os.environ", {"PALS_REQUIRE_DATABASE_URL": "true"}, clear=False):
+            store = EventStore(Path(self.temp_dir.name) / "production.db")
+            with self.assertRaisesRegex(RuntimeError, "DATABASE_URL must point to PostgreSQL"):
+                store._connect()
 
     def test_auth_and_rsvp_lifecycle(self):
         user = self.store.create_user("ella@example.com", "Ella", "password123")

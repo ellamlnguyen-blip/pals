@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, Header, HTTPException, Request, Response, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from .storage import EventStore
 
 app = FastAPI(title="Pals API")
+APP_RELEASE = "account-rollout-v1"
 MEDIA_DIR = Path(os.getenv("PALS_MEDIA_DIR", str(Path(__file__).resolve().parent.parent / "media")))
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
@@ -208,7 +209,9 @@ def health_check() -> dict[str, str]:
 
 
 @app.get("/healthz")
-def readiness_check() -> dict[str, str]:
+def readiness_check(response: Response) -> dict[str, str]:
+    response.headers["X-Pals-Release"] = APP_RELEASE
+    response.headers["X-Pals-Storage"] = "postgres" if event_store.uses_postgres else "sqlite"
     return {"status": "ready"}
 
 
