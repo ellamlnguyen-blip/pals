@@ -78,6 +78,13 @@ class EventStoreTests(unittest.TestCase):
         self.assertEqual(self.store.list_profiles(), [])
         self.assertFalse(any(item["id"] == "release-smoke-cleanup-event" for item in self.store.list_events()))
 
+    def test_reserved_release_artifacts_are_never_listed(self):
+        self.store.create_event(event("release-smoke-visible-check"), "owner")
+        self.store.create_event(event("release-debug-visible-check"), "owner")
+        self.store.create_event(event("real-visible-check"), "owner")
+        listed_ids = {item["id"] for item in self.store.list_events()}
+        self.assertEqual(listed_ids, {"real-visible-check"})
+
     def test_event_notifications_cover_posting_and_attendance(self):
         owner = self.store.create_user("notify-owner@example.com", "Owner", "password123")
         friend = self.store.create_user("notify-friend@example.com", "Friend", "password123")
